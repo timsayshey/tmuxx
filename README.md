@@ -5,24 +5,34 @@ so you see one logical name per session instead of a list of near-duplicates.
 
 ## Why
 
-tmux lets multiple sessions share the same set of windows via *session groups*.
-Some terminal setups (iTerm integration, attach scripts, etc.) create a new
-grouped session every time you attach, giving you lists that look like:
+I run a lot of parallel Claude Code sessions in tmux — one per project or
+experiment. Two things got annoying:
 
-```
-backend-5
-backend-27
-backend-28
-wp-eiq-37
-wp-eiq-38
-wp-eiq-39
-wp-eiq-40
-wp-eiq-41
-```
+1. `tmux attach -t <name>`, `tmux new -s <name>`, `tmux kill-session -t <name>`
+   is a lot of typing for something I do dozens of times a day.
+2. tmux lets multiple sessions share the same windows via *session groups*.
+   Some terminal setups (iTerm integration, attach scripts, etc.) spawn a new
+   grouped session each time you attach, and the list grows into something
+   like:
 
-All of those `wp-eiq-*` rows are the same underlying workspace — just with
-independent focus. `tmuxx` collapses them to one name per group and lets you
-attach/create/kill by that name.
+   ```
+   backend-5
+   backend-27
+   backend-28
+   frontend-37
+   frontend-38
+   frontend-39
+   frontend-40
+   frontend-41
+   ```
+
+   Every `frontend-*` row is the same underlying workspace with independent
+   focus. Finding the one you actually want to attach to is noise.
+
+`tmuxx` collapses each group down to one logical name and gives you short
+verbs — `tmuxx`, `tmuxx frontend`, `tmuxx new api`, `tmuxx kill frontend`.
+`kill` removes every member of the group, so you don't have to clean up
+stragglers by hand.
 
 ## Install
 
