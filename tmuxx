@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# tmuxx — friendly tmux wrapper that hides -N suffixes and collapses grouped sessions.
+#
+# Background: tmux sessions in the same "group" share windows but have independent focus.
+# Over time extras accumulate (mygroup-4, mygroup-17, mygroup-18...). tmuxx shows one
+# logical name per group.
+
+set -euo pipefail
+
+# Emit "group|real_session|created|attached" for every tmux session, collapsing
+# duplicates so each group appears once (prefer attached, then most recent).
+_groups() {
+    tmux list-sessions -F '#{session_group}|#{session_name}|#{session_created}|#{?session_attached,1,0}' 2>/dev/null | \
+    awk -F'|' '{
+        g = ($1 == "") ? $2 : $1
+        better = !(g in seen)
+        if (!better && $4 > att[g]) better = 1
+        else if (!better && $4 == att[g] && $3 > ctime[g]) better = 1
+        if (better) { seen[g] = 1; sess[g] = $2; ctime[g] = $3; att[g] = $4 }
+    }
+    END { for (g in seen) print g "|" sess[g] "|" ctime[g] "|" att[g] }'
+}
+
+_resolve() {
+    _groups | awk -F'|' -v n="$1" '$1 == n { print $2; exit }'
+}
+
+_list() {
+    local rows
+    rows=$(_groups) || true
+    if [[ -z "$rows" ]]; then
+        echo "no tmux sessions"
+        return 0
+    fi
+    printf '%s\n' "$rows" | sort -t'|' -k1,1 | awk -F'|' '{
+        if ($4 == "1") printf "  %s  (attached)\n", $1
+        else            printf "  %s\n", $1
+    }'
+}
+
+_attach() {
+    local target
+    target=$(_resolve "$1")
+    if [[ -z "$target" ]]; then
+        echo "tmuxx: no session '$1'" >&2
+        return 1
+    fi
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux switch-client -t "$target"
+    else
+        tmux attach-session -t "$target"
+    fi
+}
+
+_new() {
+    local name="$1"
+    if [[ -n "$(_resolve "$name")" ]]; then
+        echo "tmuxx: '$name' already exists — use 'tmuxx $name' to attach" >&2
+        return 1
+    fi
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux new-session -d -s "$name"
+        tmux switch-client -t "$name"
+    else
+        tmux new-session -s "$name"
+    fi
+}
+
+_kill() {
+    local name="$1"
+    local victims
+    victims=$(tmux list-sessions -F '#{session_group}|#{session_name}' 2>/dev/null | \
+              awk -F'|' -v n="$name" '{ g = ($1 == "") ? $2 : $1; if (g == n) print $2 }')
+    if [[ -z "$victims" ]]; then
+        echo "tmuxx: no session '$name'" >&2
+        return 1
+    fi
+    while IFS= read -r s; do
+        tmux kill-session -t "$s" && echo "killed $s"
+    done <<< "$victims"
+}
+
+_usage() {
+    cat <<'EOF'
+tmuxx — tmux wrapper that hides -N suffixes and collapses group duplicates
+
+usage:
+  tmuxx                 list sessions (one per group)
+  tmuxx <name>          attach to session
+  tmuxx new <name>      create a new session
+  tmuxx kill <name>     kill a session (all members of its group)
+  tmuxx -h | help       show this help
+EOF
+}
+
+case "${1:-}" in
+    ""|list|ls)          _list ;;
+    new)                 [[ $# -ge 2 ]] || { _usage >&2; exit 1; }; _new  "$2" ;;
+    kill|rm)             [[ $# -ge 2 ]] || { _usage >&2; exit 1; }; _kill "$2" ;;
+    -h|--help|help)      _usage ;;
+    *)                   _attach "$1" ;;
+esac
