@@ -11,9 +11,13 @@ experiment. Two things got annoying:
 1. `tmux attach -t <name>`, `tmux new -s <name>`, `tmux kill-session -t <name>`
    is a lot of typing for something I do dozens of times a day.
 2. tmux lets multiple sessions share the same windows via *session groups*.
-   Some terminal setups (iTerm integration, attach scripts, etc.) spawn a new
-   grouped session each time you attach, and the list grows into something
-   like:
+   If you're moving fast and run `tmux new -s frontend` when a `frontend`
+   session already exists, tmux (or whatever wrapper your terminal uses)
+   quietly creates a grouped duplicate with an auto-appended number —
+   `frontend-38`, `frontend-39`, and so on. Some setups (iTerm's tmux
+   integration, attach helpers) do the same thing on `attach`, which is
+   more annoying because you weren't even trying to make a new session.
+   Either way the list grows into something like:
 
    ```
    backend-5
