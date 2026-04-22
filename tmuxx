@@ -55,8 +55,9 @@ _attach() {
 _new() {
     local name="$1"
     if [[ -n "$(_resolve "$name")" ]]; then
-        echo "tmuxx: '$name' already exists — use 'tmuxx $name' to attach" >&2
-        return 1
+        echo "tmuxx: '$name' exists, attaching" >&2
+        _attach "$name"
+        return
     fi
     if [[ -n "${TMUX:-}" ]]; then
         tmux new-session -d -s "$name"
@@ -87,7 +88,7 @@ tmuxx — tmux wrapper that hides -N suffixes and collapses group duplicates
 usage:
   tmuxx                 list sessions (one per group)
   tmuxx <name>          attach to session
-  tmuxx new <name>      create a new session
+  tmuxx new <name>      create a new session (attaches if it already exists)
   tmuxx kill <name>     kill a session (all members of its group)
   tmuxx -h | help       show this help
 EOF

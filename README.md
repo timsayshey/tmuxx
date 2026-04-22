@@ -54,7 +54,7 @@ Requires `tmux` and `bash`.
 ```
 tmuxx                 list sessions (one per group)
 tmuxx <name>          attach to session
-tmuxx new <name>      create a new session
+tmuxx new <name>      create a new session (attaches if it already exists)
 tmuxx kill <name>     kill a session (all members of its group)
 tmuxx -h | help       show help
 ```
