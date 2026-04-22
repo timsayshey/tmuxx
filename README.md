@@ -34,16 +34,17 @@ experiment. Two things got annoying:
    focus. Finding the one you actually want to attach to is noise.
 
 `tmuxx` collapses each group down to one logical name and gives you short
-verbs — `tmuxx`, `tmuxx frontend`, `tmuxx new api`, `tmuxx kill frontend`.
-`kill` removes every member of the group, so you don't have to clean up
-stragglers by hand.
+verbs — `tmuxx`, `tmuxx frontend`, `tmuxx kill frontend`. `tmuxx <name>`
+attaches if the session exists and creates it if it doesn't, so you never
+have to think about which one you need. `kill` removes every member of the
+group, so you don't have to clean up stragglers by hand.
 
 ## Install
 
 Drop `tmuxx` somewhere on your `PATH` and make it executable:
 
 ```sh
-curl -o ~/.local/bin/tmuxx https://raw.githubusercontent.com/timsayshey/tmuxx/main/tmuxx
+curl -o ~/.local/bin/tmuxx https://raw.githubusercontent.com/timsayshey/tmuxx/HEAD/tmuxx
 chmod +x ~/.local/bin/tmuxx
 ```
 
@@ -53,18 +54,18 @@ Requires `tmux` and `bash`.
 
 ```
 tmuxx                 list sessions (one per group)
-tmuxx <name>          attach to session
-tmuxx new <name>      create a new session (attaches if it already exists)
+tmuxx <name>          attach to session (creates it if it doesn't exist)
 tmuxx kill <name>     kill a session (all members of its group)
 tmuxx -h | help       show help
 ```
 
-`tmuxx <name>` resolves `<name>` to the attached session in that group, or the
-most recent one if none are attached. `tmuxx kill` removes every session in
-the group, not just one member.
+`tmuxx <name>` resolves `<name>` to the attached session in that group, or
+the most recent one if none are attached. If no session exists yet, it
+creates one. `tmuxx kill` removes every session in the group, not just one
+member.
 
-If you're already inside tmux, `tmuxx <name>` and `tmuxx new <name>` use
-`switch-client` instead of `attach-session`.
+If you're already inside tmux, `tmuxx <name>` uses `switch-client` instead
+of `attach-session`.
 
 ## License
 

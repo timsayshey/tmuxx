@@ -39,31 +39,23 @@ _list() {
 }
 
 _attach() {
+    local name="$1"
     local target
-    target=$(_resolve "$1")
+    target=$(_resolve "$name")
     if [[ -z "$target" ]]; then
-        echo "tmuxx: no session '$1'" >&2
-        return 1
+        echo "tmuxx: creating '$name'" >&2
+        if [[ -n "${TMUX:-}" ]]; then
+            tmux new-session -d -s "$name"
+            tmux switch-client -t "$name"
+        else
+            tmux new-session -s "$name"
+        fi
+        return
     fi
     if [[ -n "${TMUX:-}" ]]; then
         tmux switch-client -t "$target"
     else
         tmux attach-session -t "$target"
-    fi
-}
-
-_new() {
-    local name="$1"
-    if [[ -n "$(_resolve "$name")" ]]; then
-        echo "tmuxx: '$name' exists, attaching" >&2
-        _attach "$name"
-        return
-    fi
-    if [[ -n "${TMUX:-}" ]]; then
-        tmux new-session -d -s "$name"
-        tmux switch-client -t "$name"
-    else
-        tmux new-session -s "$name"
     fi
 }
 
@@ -87,8 +79,7 @@ tmuxx — tmux wrapper that hides -N suffixes and collapses group duplicates
 
 usage:
   tmuxx                 list sessions (one per group)
-  tmuxx <name>          attach to session
-  tmuxx new <name>      create a new session (attaches if it already exists)
+  tmuxx <name>          attach to session (creates it if it doesn't exist)
   tmuxx kill <name>     kill a session (all members of its group)
   tmuxx -h | help       show this help
 EOF
@@ -96,7 +87,6 @@ EOF
 
 case "${1:-}" in
     ""|list|ls)          _list ;;
-    new)                 [[ $# -ge 2 ]] || { _usage >&2; exit 1; }; _new  "$2" ;;
     kill|rm)             [[ $# -ge 2 ]] || { _usage >&2; exit 1; }; _kill "$2" ;;
     -h|--help|help)      _usage ;;
     *)                   _attach "$1" ;;
